@@ -10,7 +10,7 @@ export default defineConfig({
     VitePWA({
       // Use our handwritten sw.js — it handles push notifications with action buttons
       strategies: 'injectManifest',
-      srcDir: 'public',
+      srcDir: 'src',
       filename: 'sw.js',
 
       manifest: {

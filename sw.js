@@ -1,4 +1,6 @@
 // NUR Prayer App — Service Worker v3
+// This allows Workbox to inject the list of files to cache
+self.__WB_MANIFEST;
 const CACHE = 'nur-v3';
 const PRECACHE = ['/', '/index.html'];
 
