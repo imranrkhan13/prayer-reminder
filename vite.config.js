@@ -13,21 +13,15 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
 
-      // FIX: Move format here, and keep swDest inside injectManifest
-      injectRegister: false,
-      manifestFilename: 'manifest.webmanifest',
-
-      // Use iife format to ensure sw.js is built as a standard script
-      useCredentials: false,
-      workbox: {
-        // This is only for 'generateSW' strategy
-      },
-
       injectManifest: {
-        swDest: 'dist/sw.js',
-        // 'format' was causing the error here; it's managed by the plugin's top-level rollup options
+        // This is the correct way to pass format to the SW bundler
+        rollupOptions: {
+          output: {
+            format: 'iife',
+            entryFileNames: 'sw.js', // Forces the name to stay sw.js
+          }
+        }
       },
-
       manifest: {
         name: 'NUR — Prayer Companion',
         short_name: 'NUR',
