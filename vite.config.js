@@ -13,10 +13,19 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
 
-      // ADD THIS SECTION TO FIX THE BUILD ERROR
+      // FIX: Move format here, and keep swDest inside injectManifest
+      injectRegister: false,
+      manifestFilename: 'manifest.webmanifest',
+
+      // Use iife format to ensure sw.js is built as a standard script
+      useCredentials: false,
+      workbox: {
+        // This is only for 'generateSW' strategy
+      },
+
       injectManifest: {
         swDest: 'dist/sw.js',
-        format: 'iife' // Ensures it stays as a standard .js file
+        // 'format' was causing the error here; it's managed by the plugin's top-level rollup options
       },
 
       manifest: {
