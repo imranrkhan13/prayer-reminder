@@ -3,7 +3,8 @@
 self.__WB_MANIFEST;
 const CACHE = 'nur-v3';
 const PRECACHE = ['/', '/index.html'];
-
+import { precacheAndRoute } from 'workbox-precaching';
+precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });

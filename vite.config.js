@@ -14,13 +14,10 @@ export default defineConfig({
       filename: 'sw.js',
 
       injectManifest: {
-        // This is the correct way to pass format to the SW bundler
-        rollupOptions: {
-          output: {
-            format: 'iife',
-            entryFileNames: 'sw.js', // Forces the name to stay sw.js
-          }
-        }
+        // This is the specific flag that prevents the .mjs output
+        rollupFormat: 'iife',
+        // This ensures it outputs to the right spot
+        swDest: 'dist/sw.js',
       },
       manifest: {
         name: 'NUR — Prayer Companion',
