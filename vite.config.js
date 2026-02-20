@@ -12,6 +12,10 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
+      injectManifest: {
+        swDest: 'dist/sw.js',
+        format: 'iife' // Ensures it stays as a standard .js file
+      },
 
       manifest: {
         name: 'NUR — Prayer Companion',
