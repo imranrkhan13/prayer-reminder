@@ -1,3 +1,4 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -8,10 +9,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // Use our handwritten sw.js — it handles push notifications with action buttons
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
+
+      // ADD THIS SECTION TO FIX THE BUILD ERROR
       injectManifest: {
         swDest: 'dist/sw.js',
         format: 'iife' // Ensures it stays as a standard .js file
