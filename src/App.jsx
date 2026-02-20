@@ -169,23 +169,147 @@ function Tip({ text, theme }) {
   );
 }
 
-// ─── INSTALL BUTTON ───────────────────────────────────────────────────────────
+// ─── INSTALL BUTTON + DOWNLOAD PROMPT ────────────────────────────────────────
 function InstallBtn({ theme }) {
   const [prompt, setPrompt] = useState(null);
-  const [done, setDone] = useState(false);
+  const [installed, setInstalled] = useState(() => LS.get('nur_installed', false));
+  const [bannerDismissed, setBannerDismissed] = useState(() => LS.get('nur_banner_dismissed', false));
+  const [showBanner, setShowBanner] = useState(false);
+
   useEffect(() => {
+    // Listen for the install prompt event (Chrome/Android)
     const h = e => { e.preventDefault(); setPrompt(e); };
     window.addEventListener('beforeinstallprompt', h);
-    return () => window.removeEventListener('beforeinstallprompt', h);
+
+    // Detect if already running as installed PWA
+    const isInstalled =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    if (isInstalled) {
+      setInstalled(true);
+      LS.set('nur_installed', true);
+    }
+
+    // Show banner after 2 seconds if not installed and not dismissed before
+    const timer = setTimeout(() => {
+      if (!isInstalled && !LS.get('nur_installed', false) && !LS.get('nur_banner_dismissed', false)) {
+        setShowBanner(true);
+      }
+    }, 2000);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', h);
+      clearTimeout(timer);
+    };
   }, []);
-  if (done || !prompt) return null;
+
+  const handleInstall = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstalled(true);
+      LS.set('nur_installed', true);
+      setShowBanner(false);
+      setPrompt(null);
+    }
+  };
+
+  const dismissBanner = () => {
+    setShowBanner(false);
+    setBannerDismissed(true);
+    LS.set('nur_banner_dismissed', true);
+  };
+
+  // Don't render anything if already installed
+  if (installed) return null;
+
   return (
-    <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.91 }}
-      onClick={async () => { prompt.prompt(); const { outcome } = await prompt.userChoice; if (outcome === 'accepted') setDone(true); setPrompt(null); }}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-[10px] font-black uppercase text-white"
-      style={{ background: theme.gradient, boxShadow: `0 4px 18px ${theme.glow}` }}>
-      <Download size={11} /> Add to Phone
-    </motion.button>
+    <>
+      {/* Small header button — only shows when prompt is available */}
+      {prompt && !showBanner && (
+        <motion.button
+          whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.91 }}
+          onClick={handleInstall}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-[10px] font-black uppercase text-white"
+          style={{ background: theme.gradient, boxShadow: `0 4px 18px ${theme.glow}` }}>
+          <Download size={11} /> Install
+        </motion.button>
+      )}
+
+      {/* Bottom banner — shown on first visit */}
+      <AnimatePresence>
+        {showBanner && (
+          <motion.div
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 120, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            className="fixed bottom-0 left-0 right-0 z-[800] flex justify-center px-4 pb-6"
+            style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div className="w-full max-w-lg rounded-[2rem] p-5 shadow-2xl"
+              style={{ background: theme.surface, boxShadow: `0 -4px 40px ${theme.glow}` }}>
+
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                    style={{ background: theme.gradient }}>
+                    🕌
+                  </div>
+                  <div>
+                    <p className="font-black text-sm" style={{ color: theme.text }}>Add NUR to your Home Screen</p>
+                    <p className="text-[10px]" style={{ color: theme.muted }}>Works like a real app — no App Store needed</p>
+                  </div>
+                </div>
+                <motion.button whileTap={{ scale: 0.88 }} onClick={dismissBanner}
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: theme.overlay }}>
+                  <X size={14} style={{ color: theme.muted }} />
+                </motion.button>
+              </div>
+
+              {/* Benefits */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {[
+                  { icon: '🔔', text: 'Prayer alerts on lock screen' },
+                  { icon: '⚡', text: 'Opens instantly like an app' },
+                  { icon: '📵', text: 'Works offline too' },
+                ].map(b => (
+                  <div key={b.text} className="flex flex-col items-center text-center p-2 rounded-2xl gap-1"
+                    style={{ background: theme.overlay }}>
+                    <span className="text-xl">{b.icon}</span>
+                    <p className="text-[8px] font-black leading-tight" style={{ color: theme.muted }}>{b.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Buttons */}
+              {prompt ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                  onClick={handleInstall}
+                  className="w-full py-4 rounded-[1.5rem] font-black text-white flex items-center justify-center gap-2"
+                  style={{ background: theme.gradient, boxShadow: `0 6px 20px ${theme.glow}` }}>
+                  <Download size={18} /> Add to Home Screen
+                </motion.button>
+              ) : (
+                <div className="w-full py-4 rounded-[1.5rem] text-center" style={{ background: theme.overlay }}>
+                  <p className="text-xs font-black" style={{ color: theme.muted }}>
+                    On iPhone: tap <span style={{ color: theme.accent }}>Share →</span> then <span style={{ color: theme.accent }}>"Add to Home Screen"</span>
+                  </p>
+                </div>
+              )}
+
+              <button onClick={dismissBanner} className="w-full mt-3 text-center text-[10px] font-bold" style={{ color: theme.muted }}>
+                No thanks, I'll use it in the browser
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
